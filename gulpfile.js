@@ -12,41 +12,61 @@ const bs           = require('browser-sync').create();
 
 
 //Gulp plugins
-const sass         = require('gulp-sass');
-const sourcemaps   = require('gulp-sourcemaps');
-const gulpif       = require('gulp-if');
-const debug        = require('gulp-debug');
-const autoprefixer = require('gulp-autoprefixer');
-const imagemin     = require('gulp-imagemin');
-const tinypng      = require('gulp-tinypng');
-const newer        = require('gulp-newer');
-const remember     = require('gulp-remember');
-const concat       = require('gulp-concat');
-const cached       = require('gulp-cached');
-const cssnano      = require('gulp-cssnano');
-const rename       = require('gulp-rename');
-const uglify       = require('gulp-uglify');
-const notify       = require('gulp-notify');
-const svgsprite    = require('gulp-svg-sprites');
-const rigger   		 = require('gulp-rigger');
-const htmlminify   = require('gulp-html-minify');
-const svg2png   	 = require('gulp-svg2png');
-const spritesmith  = require("gulp.spritesmith");
+const sass             = require('gulp-sass');
+const sourcemaps       = require('gulp-sourcemaps');
+const gulpif           = require('gulp-if');
+const debug            = require('gulp-debug');
+const autoprefixer     = require('gulp-autoprefixer');
+const imagemin         = require('gulp-imagemin');
+const tinypng          = require('gulp-tinypng');
+const newer            = require('gulp-newer');
+const remember         = require('gulp-remember');
+const concat           = require('gulp-concat');
+const cached           = require('gulp-cached');
+const cssnano          = require('gulp-cssnano');
+const rename           = require('gulp-rename');
+const uglify           = require('gulp-uglify');
+const notify           = require('gulp-notify');
+const svgsprite        = require('gulp-svg-sprites');
+const rigger           = require('gulp-rigger');
+const htmlminify       = require('gulp-html-minify');
+const svg2png          = require('gulp-svg2png');
+const spritesmith      = require("gulp.spritesmith");
+const stripCssComments = require('gulp-strip-css-comments');
+const csscomb 				 = require('gulp-csscomb');
+const combineMq 			 = require('gulp-combine-mq');
 
-const isDevelopment = !process.env.NODE_ENV || process.env.NODE_END == 'development';
 
+
+
+const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
+
+
+let assets = {
+	sass: [
+		'src/sass/blocks/*.{sass,scss}', 
+		'src/sass/lib/**/*.{css,scss,sass}',
+		'src/sass/sprite/*.{css,scss,sass}',
+		'src/sass/util/*.{scss,sass}',
+		'src/sass/drupal/*.{scss,sass}',
+		'src/sass/main.{scss,sass}'
+	]
+}
 
 
 gulp.task('sass', function() {
-	return gulp.src('src/sass/*.*')
-		.pipe(gulpif(isDevelopment, sourcemaps.init()))
+	return gulp.src('src/sass/main.*')
+		.pipe(sourcemaps.init())
 		.pipe(sass().on('error', sass.logError))
 		.pipe(autoprefixer({
 			browsers: ['last 2 versions'],
 			cascade: false
 		}))
-		.pipe(gulpif(isDevelopment, sourcemaps.write()))
+		.pipe(sourcemaps.write())
 		.pipe(gulp.dest('public/css'))
+		.pipe(csscomb('.csscomb.json'))
+		.pipe(combineMq())
+		.pipe(stripCssComments())
 		.pipe(cssnano())
 		.pipe(rename({
 			suffix: '.min'
@@ -130,7 +150,7 @@ gulp.task('server', function() {
 		notify: false,
 	});
 
-	bs.watch(['public/**/*.*', 'backend/**/*.*']).on('change', bs.reload)
+	bs.watch(['public/**/*.*','backend/**/*.*']).on('change', bs.reload)
 });
 
 
@@ -138,7 +158,7 @@ gulp.task('build:img', gulp.series('img', 'sprite:svg', 'sprite:png'));
 
 
 gulp.task('watch', function() {
-	gulp.watch(['src/sass/blocks/*.{sass,scss}', 'src/sass/lib/*.{css,scss,sass}', 'src/sass/sprite/*.{css,scss,sass}', 'src/sass/util/*.{scss,sass}'], gulp.series('sass'));
+	gulp.watch(assets.sass, gulp.series('sass'));
 	// gulp.watch(['src/html/index.html', 'src/html/tmp/*.html'], gulp.series('html'));
 	gulp.watch('src/js/**', gulp.series('js'));
 	gulp.watch('src/img/**', gulp.series('build:img'));
@@ -146,3 +166,5 @@ gulp.task('watch', function() {
 
 
 gulp.task('build', gulp.series('build:img', 'sass', 'js', 'html', gulp.parallel('watch', 'server')));
+
+
