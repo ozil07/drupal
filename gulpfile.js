@@ -150,7 +150,7 @@ gulp.task('server', function() {
 		notify: false,
 	});
 
-	bs.watch(['public/**/*.*','backend/**/*.*']).on('change', bs.reload)
+	bs.watch(['public/**/*.*','tmp/**/*.*']).on('change', bs.reload)
 });
 
 
